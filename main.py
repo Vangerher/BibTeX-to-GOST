@@ -1,8 +1,11 @@
+import html
+import re
 import sys
 
 from PySide6.QtWidgets import QApplication, QMainWindow
 
 from ui_main import Ui_MainWindow
+import bibtexparser
 
 import requests
 
@@ -23,7 +26,7 @@ class Main(QMainWindow):
             'year':"",
             'publisher' :"",
             'number': '',
-            'DOI': '',
+            'doi': '',
         }
 
     def initConnect(self):
@@ -34,23 +37,35 @@ class Main(QMainWindow):
     def convert(self):
         self.ui.label.setText('')
 
+        def clean_bibtex_text(text):
+            # HTML-сущности → нормальный текст (например, &amp; → &)
+            text = html.unescape(text)
+
+            # LaTeX спецсимволы и диакритика → Unicode
+            latex_replacements = {
+                r"{\\\"a}": "ä", r"{\\\"o}": "ö", r"{\\\"u}": "ü",
+                r"{\\\'e}": "é", r"{\\\`e}": "è", r"{\\\^o}": "ô",
+                r"{\\\~n}": "ñ", r"{\\\'a}": "á", r"{\\\`a}": "à",
+                r"\\&": "&", r"\\%": "%", r"\\_": "_",
+                r"\\#": "#", r"\\textendash": "–", r"\\textquoteleft": "‘",
+                r"\\textquoteright": "’", r"\\textquotedblleft": "“", r"\\textquotedblright": "”"
+            }
+
+            for pattern, replacement in latex_replacements.items():
+                text = re.sub(pattern, replacement, text)
+
+            # Удалить лишние фигурные скобки
+            # text = re.sub(r"[{}]", "", text)
+
+            return text
+
         def getDict():
-            try:
-                inputText = self.ui.InputText.toPlainText()
-                slicedText = inputText.split('\n')
-                for parameter in slicedText:
-                    text = parameter.replace("{", "").replace("}", "")
-                    line = text.split('=')
-                    line[0] = line[0].replace(' ','')
-
-                    if len(line) > 1:
-                        line[1] = line[1][:-1] if line[1][-1] == ',' else line[1]
-
-                    if line[0] in self.paramDict.keys():
-                        self.paramDict[line[0]] = line[1]
-            except Exception as ex:
-                print(f'Error in getDict {ex}')
-                print(self.paramDict)
+            bib_str = self.ui.InputText.toPlainText()
+            dict_str = bibtexparser.loads(clean_bibtex_text(bib_str))
+            print(dict_str.entries[0])
+            for key in dict_str.entries[0].keys():
+                if key in self.paramDict.keys():
+                    self.paramDict[key] = dict_str.entries[0][key]
 
         def processNames():
             try:
@@ -85,8 +100,8 @@ class Main(QMainWindow):
                     f'{self.paramDict['author'][0][1]}, {self.paramDict['author'][0][0]} {self.paramDict['title']}. / {', '.join(map(lambda x:''.join(x),self.paramDict['author']))} // {self.paramDict['journal']}. '
                     f'- {self.paramDict['year']}. - Vol. {self.paramDict['volume']}. - P. {self.paramDict['pages'].replace("--", "-")}.')
 
-            if self.paramDict['DOI'] != '':
-                outText += f' DOI: {self.paramDict['DOI']}.'
+            if self.paramDict['doi'] != '':
+                outText += f' doi: {self.paramDict['doi']}.'
         except Exception as ex:
             print(f'Error in getDict {ex}')
             print(self.paramDict)
