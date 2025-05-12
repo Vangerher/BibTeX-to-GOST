@@ -1,28 +1,11 @@
-import io
-import json
-import math
-import struct
-import subprocess
 import sys
-import time
-import os
-from datetime import datetime
-from logging import exception
 
-from argon2 import PasswordHasher
-from cryptography.fernet import Fernet
-import crcmod as crc
-import numpy as np
-import pandas as pd
-import serial
-import serial.tools.list_ports
-from PySide6.QtCore import QTimer, Signal, QObject, QThread, Qt
-from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QWidget, QComboBox, \
-    QFileDialog, QCheckBox, QPushButton, QTabWidget, QToolBar, QTableWidgetItem, QMenu, QTableWidget, QAbstractItemView
-from PySide6.QtGui import QIcon, QFontMetrics, QPainter, QColor, QPen, QAction, QBrush
-from pandas.io.clipboard import clipboard_set
+from PySide6.QtWidgets import QApplication, QMainWindow
 
 from ui_main import Ui_MainWindow
+
+import requests
+
 
 class Main(QMainWindow):
 
@@ -46,6 +29,7 @@ class Main(QMainWindow):
     def initConnect(self):
         self.ui.CopyBtn.clicked.connect(self.copy)
         self.ui.ConvertBtn.clicked.connect(self.convert)
+        self.ui.GetBibTeX.clicked.connect(self.GetBibText)
 
     def convert(self):
         self.ui.label.setText('')
@@ -64,8 +48,8 @@ class Main(QMainWindow):
 
                     if line[0] in self.paramDict.keys():
                         self.paramDict[line[0]] = line[1]
-            except Exception as e:
-                print('Error in getDict'+e)
+            except Exception as ex:
+                print(f'Error in getDict {ex}')
                 print(self.paramDict)
 
         def processNames():
@@ -85,8 +69,8 @@ class Main(QMainWindow):
                     authors[3] = '[et. al.]'
                 self.paramDict['author'] = authors
 
-            except Exception as e:
-                print('Error in processNames'+e)
+            except Exception as ex:
+                print(f'Error in getDict {ex}')
                 print(self.paramDict)
 
         getDict()
@@ -94,21 +78,28 @@ class Main(QMainWindow):
 
         try:
             if self.paramDict['number'] != '':
-                outText = (f'{self.paramDict['author'][0][1]}, {self.paramDict['author'][0][0]}{self.paramDict['title']}. / {', '.join(map(lambda x:''.join(x),self.paramDict['author']))} // {self.paramDict['publisher']}. '
+                outText = (f'{self.paramDict['author'][0][1]}, {self.paramDict['author'][0][0]}{self.paramDict['title']}. / {', '.join(map(lambda x:''.join(x),self.paramDict['author']))} // {self.paramDict['journal']}. '
                            f'- {self.paramDict['year']}. - Vol. {self.paramDict['volume']}. - № {self.paramDict['number']}. - P. {self.paramDict['pages'].replace("--","-")}.')
             else:
                 outText = (
-                    f'{self.paramDict['author'][0][1]}, {self.paramDict['author'][0][0]} {self.paramDict['title']}. / {', '.join(map(lambda x:''.join(x),self.paramDict['author']))} // {self.paramDict['publisher']}. '
+                    f'{self.paramDict['author'][0][1]}, {self.paramDict['author'][0][0]} {self.paramDict['title']}. / {', '.join(map(lambda x:''.join(x),self.paramDict['author']))} // {self.paramDict['journal']}. '
                     f'- {self.paramDict['year']}. - Vol. {self.paramDict['volume']}. - P. {self.paramDict['pages'].replace("--", "-")}.')
 
             if self.paramDict['DOI'] != '':
                 outText += f' DOI: {self.paramDict['DOI']}.'
-        except Exception as e:
-            print('Error in setting output' + e)
+        except Exception as ex:
+            print(f'Error in getDict {ex}')
             print(self.paramDict)
 
         self.ui.OutputText.setPlainText(outText)
         self.copy()
+
+    def GetBibText(self):
+        if self.ui.DOIEntry.text() != '':
+            headers = {"Accept": "application/x-bibtex"}
+            response = requests.get(f"https://doi.org/{self.ui.DOIEntry.text()}", headers = headers)
+            self.ui.InputText.setPlainText(response.text.replace("},",'},\n'))
+            print(response)
 
     def copy(self):
         self.ui.label.setText('Скопировано')
