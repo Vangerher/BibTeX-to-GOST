@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainfkuDzr.ui'
+## Form generated from reading UI file 'maincUbzHy.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.8.1
 ##
@@ -115,7 +115,7 @@ class Ui_MainWindow(object):
     # setupUi
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"LaTeX-GOST converter", None))
+        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"BibTeX-GOST converter", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"DOI:", None))
         self.GetBibTeX.setText(QCoreApplication.translate("MainWindow", u"\u041f\u043e\u043b\u0443\u0447\u0438\u0442\u044c", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"BibTeX ", None))
