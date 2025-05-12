@@ -6,6 +6,7 @@ import requests
 
 from PySide6.QtWidgets import QApplication, QMainWindow
 from ui_main import Ui_MainWindow
+import bibtexparser
 
 
 
@@ -61,7 +62,6 @@ class Main(QMainWindow):
         def getDict():
             bib_str = self.ui.InputText.toPlainText()
             dict_str = bibtexparser.loads(clean_bibtex_text(bib_str))
-            print(dict_str.entries[0])
             for key in dict_str.entries[0].keys():
                 if key in self.paramDict.keys():
                     self.paramDict[key] = dict_str.entries[0][key]
@@ -85,7 +85,6 @@ class Main(QMainWindow):
 
             except Exception as ex:
                 print(f'Error in getDict {ex}')
-                print(self.paramDict)
 
         getDict()
         processNames()
@@ -100,7 +99,7 @@ class Main(QMainWindow):
                     f'- {self.paramDict['year']}. - Vol. {self.paramDict['volume']}. - P. {self.paramDict['pages'].replace("--", "-")}.')
 
             if self.paramDict['doi'] != '':
-                outText += f' doi: {self.paramDict['doi']}.'
+                outText += f' DOI: {self.paramDict['doi']}.'
         except Exception as ex:
             print(f'Error in getDict {ex}')
             print(self.paramDict)
